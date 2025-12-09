@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import streamRoutes from './routes/stream.routes.js';
+import videoRoutes from './routes/video.routes.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { db } from './config/database.js';
 
@@ -48,6 +49,10 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/streams', streamRoutes);
+app.use('/api/videos', videoRoutes);
+
+// Serve uploaded files
+app.use('/uploads', express.static(process.env.UPLOADS_DIR || './uploads'));
 
 // Error Handler
 app.use(errorHandler);

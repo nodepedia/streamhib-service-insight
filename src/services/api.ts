@@ -134,6 +134,80 @@ class ApiService {
   async getStreamStats(id: string) {
     return this.request(`/streams/${id}/stats`);
   }
+
+  // Videos
+  async getVideos() {
+    return this.request<Video[]>('/videos');
+  }
+
+  async getVideo(id: string) {
+    return this.request<Video>(`/videos/${id}`);
+  }
+
+  async uploadVideo(file: File, title: string, description?: string) {
+    const formData = new FormData();
+    formData.append('video', file);
+    formData.append('title', title);
+    if (description) formData.append('description', description);
+
+    const headers: HeadersInit = {};
+    if (this.token) headers.Authorization = `Bearer ${this.token}`;
+
+    const response = await fetch(`${API_URL}/videos/upload`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    return response.json();
+  }
+
+  async updateVideo(id: string, data: { title?: string; description?: string }) {
+    return this.request<Video>(`/videos/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteVideo(id: string) {
+    return this.request(`/videos/${id}`, { method: 'DELETE' });
+  }
+
+  async getVideoStorageStats() {
+    return this.request<{ totalVideos: number; totalSize: number }>('/videos/stats/storage');
+  }
+
+  // Playlists
+  async getPlaylists() {
+    return this.request<Playlist[]>('/videos/playlists/all');
+  }
+
+  async getPlaylist(id: string) {
+    return this.request<Playlist>(`/videos/playlists/${id}`);
+  }
+
+  async createPlaylist(name: string, description?: string) {
+    return this.request<Playlist>('/videos/playlists', {
+      method: 'POST',
+      body: JSON.stringify({ name, description }),
+    });
+  }
+
+  async addVideoToPlaylist(playlistId: string, videoId: string) {
+    return this.request(`/videos/playlists/${playlistId}/videos`, {
+      method: 'POST',
+      body: JSON.stringify({ videoId }),
+    });
+  }
+
+  async removeVideoFromPlaylist(playlistId: string, videoId: string) {
+    return this.request(`/videos/playlists/${playlistId}/videos/${videoId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deletePlaylist(id: string) {
+    return this.request(`/videos/playlists/${id}`, { method: 'DELETE' });
+  }
 }
 
 // Types
@@ -143,6 +217,33 @@ export interface User {
   name: string;
   role: 'user' | 'admin';
   plan: 'free' | 'starter' | 'professional' | 'enterprise';
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface Video {
+  id: string;
+  user_id: string;
+  title: string;
+  description?: string;
+  filename: string;
+  original_filename: string;
+  file_size: number;
+  duration_seconds?: number;
+  mime_type: string;
+  status: 'processing' | 'ready' | 'error';
+  thumbnail_url?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface Playlist {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  video_count?: number;
+  videos?: Video[];
   created_at: string;
   updated_at?: string;
 }

@@ -5,7 +5,9 @@ import {
   PlayCircle, 
   Radio,
   LogOut,
-  User
+  User,
+  Video,
+  ListVideo
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +15,8 @@ import { Button } from '@/components/ui/button';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/user/dashboard' },
+  { icon: Video, label: 'Video Manager', href: '/user/videos' },
+  { icon: ListVideo, label: 'Playlists', href: '/user/playlists' },
   { icon: Key, label: 'YouTube API', href: '/user/youtube-api' },
   { icon: PlayCircle, label: 'Mulai Live', href: '/user/start-live' },
 ];
