@@ -1,83 +1,86 @@
-import { Play, Mail, Phone, MapPin, Youtube, Facebook, Instagram, Twitter } from "lucide-react";
+import { Zap, Mail, Phone, MapPin, Youtube, Linkedin, Twitter, Instagram } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
     product: [
-      { label: "Fitur", href: "#fitur" },
-      { label: "Harga", href: "#harga" },
-      { label: "API Docs", href: "#" },
+      { label: "Fitur", href: "#features" },
+      { label: "Harga", href: "#pricing" },
+      { label: "API Documentation", href: "#" },
       { label: "Changelog", href: "#" },
+      { label: "Status", href: "#" },
     ],
     company: [
       { label: "Tentang Kami", href: "#" },
       { label: "Blog", href: "#" },
       { label: "Karir", href: "#" },
       { label: "Partner", href: "#" },
+      { label: "Press Kit", href: "#" },
     ],
-    support: [
-      { label: "Pusat Bantuan", href: "#" },
-      { label: "Tutorial", href: "#" },
-      { label: "Status Server", href: "#" },
-      { label: "Hubungi Kami", href: "#" },
+    resources: [
+      { label: "Dokumentasi", href: "#" },
+      { label: "Tutorial Video", href: "#" },
+      { label: "Webinar", href: "#" },
+      { label: "Community", href: "#" },
     ],
     legal: [
       { label: "Kebijakan Privasi", href: "#" },
-      { label: "Syarat & Ketentuan", href: "#" },
+      { label: "Syarat Layanan", href: "#" },
       { label: "Cookie Policy", href: "#" },
+      { label: "GDPR", href: "#" },
     ],
   };
 
   const socialLinks = [
     { icon: Youtube, href: "#", label: "YouTube" },
-    { icon: Facebook, href: "#", label: "Facebook" },
-    { icon: Instagram, href: "#", label: "Instagram" },
     { icon: Twitter, href: "#", label: "Twitter" },
+    { icon: Linkedin, href: "#", label: "LinkedIn" },
+    { icon: Instagram, href: "#", label: "Instagram" },
   ];
 
   return (
-    <footer className="bg-secondary/50 border-t border-border">
-      <div className="container mx-auto px-4 py-16">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
+    <footer className="bg-foreground text-background">
+      <div className="container mx-auto py-16">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-12">
           {/* Brand */}
           <div className="col-span-2">
-            <a href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
-                <Play className="w-4 h-4 text-primary-foreground fill-current" />
+            <a href="/" className="flex items-center gap-2.5 mb-5">
+              <div className="w-9 h-9 bg-gradient-primary rounded-xl flex items-center justify-center">
+                <Zap className="w-5 h-5 text-primary-foreground" />
               </div>
               <span className="text-xl font-bold">
-                Stream<span className="gradient-text">Hub</span>
+                Live<span className="text-primary">Forge</span>
               </span>
             </a>
-            <p className="text-muted-foreground mb-6 max-w-xs">
-              Platform live streaming 24/7 tanpa komputer. Upload sekali, streaming jalan terus.
+            <p className="text-background/60 mb-6 max-w-xs leading-relaxed">
+              Platform cloud streaming profesional untuk kreator modern. Siaran 24/7 tanpa batas.
             </p>
-            
-            {/* Contact Info */}
-            <div className="space-y-3 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
+
+            {/* Contact */}
+            <div className="space-y-3 text-sm text-background/60">
+              <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4" />
-                <span>hello@streamhub.id</span>
+                <span>hello@liveforge.id</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4" />
-                <span>+62 812-3456-7890</span>
+                <span>+62 21 1234 5678</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <MapPin className="w-4 h-4" />
                 <span>Jakarta, Indonesia</span>
               </div>
             </div>
           </div>
 
-          {/* Product Links */}
+          {/* Product */}
           <div>
-            <h4 className="font-semibold mb-4">Produk</h4>
+            <h4 className="font-semibold mb-4 text-sm">Produk</h4>
             <ul className="space-y-3">
               {footerLinks.product.map((link, index) => (
                 <li key={index}>
-                  <a href={link.href} className="text-muted-foreground hover:text-foreground transition-colors">
+                  <a href={link.href} className="text-sm text-background/60 hover:text-background transition-colors">
                     {link.label}
                   </a>
                 </li>
@@ -85,13 +88,13 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Company Links */}
+          {/* Company */}
           <div>
-            <h4 className="font-semibold mb-4">Perusahaan</h4>
+            <h4 className="font-semibold mb-4 text-sm">Perusahaan</h4>
             <ul className="space-y-3">
               {footerLinks.company.map((link, index) => (
                 <li key={index}>
-                  <a href={link.href} className="text-muted-foreground hover:text-foreground transition-colors">
+                  <a href={link.href} className="text-sm text-background/60 hover:text-background transition-colors">
                     {link.label}
                   </a>
                 </li>
@@ -99,13 +102,13 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Support Links */}
+          {/* Resources */}
           <div>
-            <h4 className="font-semibold mb-4">Dukungan</h4>
+            <h4 className="font-semibold mb-4 text-sm">Resources</h4>
             <ul className="space-y-3">
-              {footerLinks.support.map((link, index) => (
+              {footerLinks.resources.map((link, index) => (
                 <li key={index}>
-                  <a href={link.href} className="text-muted-foreground hover:text-foreground transition-colors">
+                  <a href={link.href} className="text-sm text-background/60 hover:text-background transition-colors">
                     {link.label}
                   </a>
                 </li>
@@ -113,13 +116,13 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Legal Links */}
+          {/* Legal */}
           <div>
-            <h4 className="font-semibold mb-4">Legal</h4>
+            <h4 className="font-semibold mb-4 text-sm">Legal</h4>
             <ul className="space-y-3">
               {footerLinks.legal.map((link, index) => (
                 <li key={index}>
-                  <a href={link.href} className="text-muted-foreground hover:text-foreground transition-colors">
+                  <a href={link.href} className="text-sm text-background/60 hover:text-background transition-colors">
                     {link.label}
                   </a>
                 </li>
@@ -128,22 +131,22 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="border-t border-border mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
-            © {currentYear} StreamHub. All rights reserved.
+        {/* Bottom */}
+        <div className="border-t border-background/10 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-background/50">
+            © {currentYear} LiveForge. All rights reserved.
           </p>
-          
+
           {/* Social Links */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {socialLinks.map((social, index) => (
               <a
                 key={index}
                 href={social.href}
                 aria-label={social.label}
-                className="w-10 h-10 rounded-lg bg-background border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/50 transition-all"
+                className="w-10 h-10 rounded-xl bg-background/5 border border-background/10 flex items-center justify-center text-background/60 hover:text-background hover:bg-background/10 hover:border-background/20 transition-all"
               >
-                <social.icon className="w-5 h-5" />
+                <social.icon className="w-4 h-4" />
               </a>
             ))}
           </div>

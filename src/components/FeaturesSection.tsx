@@ -1,75 +1,84 @@
-import { Server, Smartphone, Shield, Clock, Music, Zap } from "lucide-react";
+import { Server, Globe, Shield, Calendar, Headphones, Gauge } from "lucide-react";
 
 const features = [
   {
     icon: Server,
-    title: "Server kami yang streaming",
-    description: "Komputer kamu bisa dimatikan, HP bisa dicharge. Live streaming tetap jalan 24/7 dari server kami yang powerful.",
+    title: "Infrastruktur Cloud",
+    description: "Server enterprise-grade menangani siaran Anda. Tidak perlu komputer atau perangkat yang terus menyala.",
+    color: "primary",
   },
   {
-    icon: Smartphone,
-    title: "Kontrol dari HP/laptop",
-    description: "Cukup buka browser, login dashboard. Mau di warung kopi atau di rumah, kamu bisa monitor dan kontrol live streaming.",
+    icon: Globe,
+    title: "Multi-Platform",
+    description: "Siaran simultan ke YouTube dan Facebook dari satu dashboard terpusat yang mudah digunakan.",
+    color: "accent",
   },
   {
     icon: Shield,
-    title: "Dijamin gak pernah mati",
-    description: "Server kami monitoring 24/7 dengan backup otomatis. Uptime 99.9% - live streaming kamu aman dan stabil terus.",
+    title: "Keandalan Tinggi",
+    description: "Uptime 99.9% dengan failover otomatis. Siaran Anda tetap berjalan bahkan saat terjadi gangguan.",
+    color: "success",
   },
   {
-    icon: Clock,
-    title: "Jadwal otomatis",
-    description: "Mau live jam 8 pagi sampai 10 malam setiap hari? Tinggal set jadwal sekali, sistem otomatis handle semuanya.",
+    icon: Calendar,
+    title: "Penjadwalan Cerdas",
+    description: "Atur jadwal siaran untuk minggu atau bulan ke depan. Sistem berjalan otomatis sesuai jadwal.",
+    color: "warning",
   },
   {
-    icon: Music,
-    title: "Perfect untuk ASMR & musik",
-    description: "Upload 1 video musik relaksasi atau ASMR, akan loop terus selama live aktif. Cocok banget untuk konten ambient.",
+    icon: Headphones,
+    title: "Konten Ambient",
+    description: "Ideal untuk musik lo-fi, ASMR, atau suara alam. Video loop otomatis selama siaran berlangsung.",
+    color: "primary",
   },
   {
-    icon: Zap,
-    title: "Setup dalam 5 menit",
-    description: "Tidak perlu skill teknis. Upload video, masukkan stream key YouTube/Facebook, klik Start. Selesai!",
+    icon: Gauge,
+    title: "Analitik Real-time",
+    description: "Pantau performa siaran dengan metrik langsung: viewer, durasi, engagement, dan lainnya.",
+    color: "accent",
   },
 ];
 
+const colorClasses = {
+  primary: "bg-primary/10 text-primary border-primary/20",
+  accent: "bg-accent/10 text-accent border-accent/20",
+  success: "bg-success/10 text-success border-success/20",
+  warning: "bg-warning/10 text-warning border-warning/20",
+};
+
 const FeaturesSection = () => {
   return (
-    <section id="fitur" className="py-24 relative">
+    <section id="features" className="py-24 relative">
       {/* Background */}
-      <div className="absolute inset-0 -z-10 bg-secondary/30" />
-      
-      <div className="container mx-auto px-4">
+      <div className="absolute inset-0 -z-10 bg-secondary/40" />
+
+      <div className="container mx-auto">
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Kenapa Harus <span className="gradient-text">StreamHub</span>?
+        <div className="text-center max-w-2xl mx-auto mb-16">
+          <p className="text-sm font-semibold text-primary mb-3 tracking-wide uppercase">Fitur Unggulan</p>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4 tracking-tight">
+            Semua yang Anda Butuhkan untuk <span className="text-gradient">Siaran Profesional</span>
           </h2>
-          <p className="text-lg text-muted-foreground">
-            Karena Kita yang Repot, Kamu Tinggal Santai. Udah capek komputer overheat? 
-            StreamHub hadir buat ngatasin semua masalah itu.
+          <p className="text-muted-foreground text-lg">
+            Teknologi streaming terdepan dalam platform yang sederhana dan mudah digunakan.
           </p>
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => (
             <div
               key={index}
-              className="group relative bg-card rounded-2xl p-6 border border-border hover:border-primary/50 transition-all duration-300 hover-lift"
-              style={{ animationDelay: `${index * 0.1}s` }}
+              className="card-elevated p-6 group"
             >
               {/* Icon */}
-              <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <feature.icon className="w-6 h-6 text-primary-foreground" />
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 border ${colorClasses[feature.color as keyof typeof colorClasses]} transition-transform group-hover:scale-110`}>
+                <feature.icon className="w-6 h-6" />
               </div>
 
               {/* Content */}
-              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-              <p className="text-muted-foreground">{feature.description}</p>
-
-              {/* Hover Glow */}
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity -z-10" />
+              <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+              <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>
