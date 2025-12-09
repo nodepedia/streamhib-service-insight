@@ -1,14 +1,10 @@
-import { ReactNode, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import UserSidebar from './UserSidebar';
 import { Loader2 } from 'lucide-react';
 
-interface UserLayoutProps {
-  children: ReactNode;
-}
-
-const UserLayout = ({ children }: UserLayoutProps) => {
+const UserLayout = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -35,7 +31,7 @@ const UserLayout = ({ children }: UserLayoutProps) => {
       <UserSidebar />
       <main className="ml-64 min-h-screen">
         <div className="p-6">
-          {children}
+          <Outlet />
         </div>
       </main>
     </div>
