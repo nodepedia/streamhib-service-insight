@@ -1,4 +1,4 @@
-import { Zap, Mail, Phone, MapPin, Youtube, Linkedin, Twitter, Instagram } from "lucide-react";
+import { Mail, Phone, MapPin, Youtube, Linkedin, Twitter, Instagram } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -47,11 +47,14 @@ const Footer = () => {
           <div className="col-span-2">
             <a href="/" className="flex items-center gap-2.5 mb-5">
               <div className="w-9 h-9 bg-gradient-primary rounded-xl flex items-center justify-center">
-                <Zap className="w-5 h-5 text-primary-foreground" />
+                <span className="text-primary-foreground font-bold text-lg">∞</span>
               </div>
-              <span className="text-xl font-bold">
-                Live<span className="text-primary">Forge</span>
-              </span>
+              <div className="flex flex-col leading-none">
+                <span className="text-xl font-bold">
+                  Infinity<span className="text-primary">Stream</span>
+                </span>
+                <span className="text-[10px] text-background/50">by BelajarNode</span>
+              </div>
             </a>
             <p className="text-background/60 mb-6 max-w-xs leading-relaxed">
               Platform cloud streaming profesional untuk kreator modern. Siaran 24/7 tanpa batas.
@@ -61,7 +64,7 @@ const Footer = () => {
             <div className="space-y-3 text-sm text-background/60">
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4" />
-                <span>hello@liveforge.id</span>
+                <span>hello@infinitystream.id</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4" />
@@ -134,7 +137,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="border-t border-background/10 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-background/50">
-            © {currentYear} LiveForge. All rights reserved.
+            © {currentYear} InfinityStream by BelajarNode. All rights reserved.
           </p>
 
           {/* Social Links */}

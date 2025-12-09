@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,11 +32,14 @@ const Navbar = () => {
           {/* Logo */}
           <a href="/" className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-gradient-primary rounded-xl flex items-center justify-center shadow-soft">
-              <Zap className="w-5 h-5 text-primary-foreground" />
+              <span className="text-primary-foreground font-bold text-lg">∞</span>
             </div>
-            <span className="text-xl font-bold tracking-tight">
-              Live<span className="text-gradient">Forge</span>
-            </span>
+            <div className="flex flex-col leading-none">
+              <span className="text-lg font-bold tracking-tight">
+                Infinity<span className="text-gradient">Stream</span>
+              </span>
+              <span className="text-[10px] text-muted-foreground">by BelajarNode</span>
+            </div>
           </a>
 
           {/* Desktop Navigation */}
