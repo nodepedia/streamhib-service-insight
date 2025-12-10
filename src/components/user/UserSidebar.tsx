@@ -7,7 +7,8 @@ import {
   LogOut,
   User,
   Video,
-  ListVideo
+  ListVideo,
+  Calendar
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +17,7 @@ import { Button } from '@/components/ui/button';
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/user/dashboard' },
   { icon: Radio, label: 'Live Streams', href: '/user/live-streams' },
+  { icon: Calendar, label: 'Jadwal', href: '/user/schedules' },
   { icon: Video, label: 'Video Manager', href: '/user/videos' },
   { icon: ListVideo, label: 'Playlists', href: '/user/playlists' },
   { icon: Key, label: 'YouTube API', href: '/user/youtube-api' },
