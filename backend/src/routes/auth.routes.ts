@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../config/database.js';
 import { validate } from '../middleware/validate.middleware.js';
@@ -42,10 +42,14 @@ router.post('/register', validate(registerSchema), async (req, res: Response) =>
     const user = result.rows[0];
 
     // Generate JWT
+    const signOptions: SignOptions = {
+      expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+    };
+    
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, plan: user.plan },
       process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      signOptions
     );
 
     res.status(201).json({
@@ -94,10 +98,14 @@ router.post('/login', validate(loginSchema), async (req, res: Response) => {
     }
 
     // Generate JWT
+    const signOptions: SignOptions = {
+      expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+    };
+    
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, plan: user.plan },
       process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      signOptions
     );
 
     res.json({
@@ -147,10 +155,14 @@ router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
 // POST /api/auth/refresh
 router.post('/refresh', authenticate, async (req: AuthRequest, res: Response) => {
   try {
+    const signOptions: SignOptions = {
+      expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+    };
+    
     const token = jwt.sign(
       { id: req.user?.id, email: req.user?.email, role: req.user?.role, plan: req.user?.plan },
       process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      signOptions
     );
 
     res.json({

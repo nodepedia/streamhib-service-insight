@@ -1,10 +1,11 @@
-import express from 'express';
-import multer from 'multer';
+import express, { Response, NextFunction } from 'express';
+import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../config/database.js';
 import { authenticate } from '../middleware/auth.middleware.js';
+import { AuthRequest } from '../types/index.js';
 
 const router = express.Router();
 
@@ -16,20 +17,20 @@ if (!fs.existsSync(uploadsDir)) {
 
 // Multer configuration for video uploads
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (req: AuthRequest, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
     const userDir = path.join(uploadsDir, req.user!.id);
     if (!fs.existsSync(userDir)) {
       fs.mkdirSync(userDir, { recursive: true });
     }
     cb(null, userDir);
   },
-  filename: (req, file, cb) => {
+  filename: (req: AuthRequest, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
     const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
     cb(null, uniqueName);
   }
 });
 
-const fileFilter = (req: express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (req: express.Request, file: Express.Multer.File, cb: FileFilterCallback) => {
   const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'];
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
@@ -47,7 +48,7 @@ const upload = multer({
 });
 
 // Get all videos for user
-router.get('/', authenticate, async (req, res, next) => {
+router.get('/', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { rows } = await db.query(
       `SELECT * FROM videos WHERE user_id = $1 ORDER BY created_at DESC`,
@@ -60,14 +61,15 @@ router.get('/', authenticate, async (req, res, next) => {
 });
 
 // Get single video
-router.get('/:id', authenticate, async (req, res, next) => {
+router.get('/:id', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { rows } = await db.query(
       `SELECT * FROM videos WHERE id = $1 AND user_id = $2`,
       [req.params.id, req.user!.id]
     );
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Video not found' });
+      res.status(404).json({ success: false, error: 'Video not found' });
+      return;
     }
     res.json({ success: true, data: rows[0] });
   } catch (error) {
@@ -76,10 +78,12 @@ router.get('/:id', authenticate, async (req, res, next) => {
 });
 
 // Upload video
-router.post('/upload', authenticate, upload.single('video'), async (req, res, next) => {
+router.post('/upload', authenticate, upload.single('video'), async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, error: 'No video file provided' });
+    const file = req.file;
+    if (!file) {
+      res.status(400).json({ success: false, error: 'No video file provided' });
+      return;
     }
 
     const { title, description } = req.body;
@@ -90,12 +94,12 @@ router.post('/upload', authenticate, upload.single('video'), async (req, res, ne
        RETURNING *`,
       [
         req.user!.id,
-        title || req.file.originalname,
+        title || file.originalname,
         description || null,
-        req.file.filename,
-        req.file.originalname,
-        req.file.size,
-        req.file.mimetype
+        file.filename,
+        file.originalname,
+        file.size,
+        file.mimetype
       ]
     );
 
@@ -106,7 +110,7 @@ router.post('/upload', authenticate, upload.single('video'), async (req, res, ne
 });
 
 // Update video
-router.patch('/:id', authenticate, async (req, res, next) => {
+router.patch('/:id', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { title, description } = req.body;
     
@@ -117,7 +121,8 @@ router.patch('/:id', authenticate, async (req, res, next) => {
     );
     
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Video not found' });
+      res.status(404).json({ success: false, error: 'Video not found' });
+      return;
     }
     
     res.json({ success: true, data: rows[0] });
@@ -127,7 +132,7 @@ router.patch('/:id', authenticate, async (req, res, next) => {
 });
 
 // Delete video
-router.delete('/:id', authenticate, async (req, res, next) => {
+router.delete('/:id', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     // Get video info first
     const { rows: videos } = await db.query(
@@ -136,7 +141,8 @@ router.delete('/:id', authenticate, async (req, res, next) => {
     );
     
     if (videos.length === 0) {
-      return res.status(404).json({ success: false, error: 'Video not found' });
+      res.status(404).json({ success: false, error: 'Video not found' });
+      return;
     }
 
     // Delete file from disk
@@ -155,7 +161,7 @@ router.delete('/:id', authenticate, async (req, res, next) => {
 });
 
 // Get user storage stats
-router.get('/stats/storage', authenticate, async (req, res, next) => {
+router.get('/stats/storage', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { rows } = await db.query(
       `SELECT COUNT(*) as total_videos, COALESCE(SUM(file_size), 0) as total_size 
@@ -177,7 +183,7 @@ router.get('/stats/storage', authenticate, async (req, res, next) => {
 // ============ PLAYLISTS ============
 
 // Get all playlists
-router.get('/playlists/all', authenticate, async (req, res, next) => {
+router.get('/playlists/all', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { rows } = await db.query(
       `SELECT p.*, COUNT(pv.id) as video_count
@@ -195,7 +201,7 @@ router.get('/playlists/all', authenticate, async (req, res, next) => {
 });
 
 // Create playlist
-router.post('/playlists', authenticate, async (req, res, next) => {
+router.post('/playlists', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { name, description } = req.body;
     
@@ -211,7 +217,7 @@ router.post('/playlists', authenticate, async (req, res, next) => {
 });
 
 // Get playlist with videos
-router.get('/playlists/:id', authenticate, async (req, res, next) => {
+router.get('/playlists/:id', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { rows: playlists } = await db.query(
       `SELECT * FROM playlists WHERE id = $1 AND user_id = $2`,
@@ -219,7 +225,8 @@ router.get('/playlists/:id', authenticate, async (req, res, next) => {
     );
     
     if (playlists.length === 0) {
-      return res.status(404).json({ success: false, error: 'Playlist not found' });
+      res.status(404).json({ success: false, error: 'Playlist not found' });
+      return;
     }
 
     const { rows: videos } = await db.query(
@@ -241,7 +248,7 @@ router.get('/playlists/:id', authenticate, async (req, res, next) => {
 });
 
 // Add video to playlist
-router.post('/playlists/:id/videos', authenticate, async (req, res, next) => {
+router.post('/playlists/:id/videos', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { videoId } = req.body;
     
@@ -264,7 +271,7 @@ router.post('/playlists/:id/videos', authenticate, async (req, res, next) => {
 });
 
 // Remove video from playlist
-router.delete('/playlists/:playlistId/videos/:videoId', authenticate, async (req, res, next) => {
+router.delete('/playlists/:playlistId/videos/:videoId', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     await db.query(
       `DELETE FROM playlist_videos WHERE playlist_id = $1 AND video_id = $2`,
@@ -277,7 +284,7 @@ router.delete('/playlists/:playlistId/videos/:videoId', authenticate, async (req
 });
 
 // Delete playlist
-router.delete('/playlists/:id', authenticate, async (req, res, next) => {
+router.delete('/playlists/:id', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { rowCount } = await db.query(
       `DELETE FROM playlists WHERE id = $1 AND user_id = $2`,
@@ -285,7 +292,8 @@ router.delete('/playlists/:id', authenticate, async (req, res, next) => {
     );
     
     if (rowCount === 0) {
-      return res.status(404).json({ success: false, error: 'Playlist not found' });
+      res.status(404).json({ success: false, error: 'Playlist not found' });
+      return;
     }
     
     res.json({ success: true, message: 'Playlist deleted successfully' });

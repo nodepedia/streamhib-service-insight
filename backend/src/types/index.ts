@@ -40,15 +40,6 @@ export interface StreamSession {
   average_viewers: number;
 }
 
-export interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    role: string;
-    plan: string;
-  };
-}
-
 export interface JWTPayload {
   id: string;
   email: string;
@@ -56,9 +47,22 @@ export interface JWTPayload {
   plan: string;
 }
 
+export interface AuthRequest extends Request {
+  user?: JWTPayload;
+}
+
 export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
   message?: string;
+}
+
+// Extend Express Request to include user and file
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JWTPayload;
+    }
+  }
 }
