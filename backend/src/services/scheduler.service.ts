@@ -1,7 +1,5 @@
-import cron from 'node-cron';
 import { db } from '../config/database.js';
 import { streamingEngine } from './streaming.engine.js';
-import path from 'path';
 
 interface Schedule {
   id: string;
@@ -24,24 +22,28 @@ interface Schedule {
 }
 
 class SchedulerService {
-  private cronJob: cron.ScheduledTask | null = null;
+  private intervalId: NodeJS.Timeout | null = null;
 
   constructor() {
     this.start();
   }
 
   start() {
-    // Check schedules every minute
-    this.cronJob = cron.schedule('* * * * *', async () => {
+    // Check schedules every minute using setInterval
+    this.intervalId = setInterval(async () => {
       await this.checkSchedules();
-    });
+    }, 60 * 1000); // Every 60 seconds
+    
+    // Also run immediately on start
+    this.checkSchedules();
     
     console.log('✅ Scheduler service started');
   }
 
   stop() {
-    if (this.cronJob) {
-      this.cronJob.stop();
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
       console.log('⏹️ Scheduler service stopped');
     }
   }
@@ -131,7 +133,7 @@ class SchedulerService {
 
       // Start the stream
       await streamingEngine.startStream({
-        streamId,
+        streamId: streamId!,
         userId: schedule.user_id,
         videoPath: videoFilename,
         platform: schedule.platform,
@@ -212,8 +214,8 @@ class SchedulerService {
     }
   }
 
-  async createSchedule(data: Omit<Schedule, 'id' | 'is_active' | 'next_run_at' | 'run_count'>): Promise<Schedule> {
-    const nextRun = this.calculateNextRun(data as Schedule) || data.scheduled_at;
+  async createSchedule(data: Omit<Schedule, 'id' | 'is_active' | 'next_run_at'>): Promise<Schedule> {
+    const nextRun = this.calculateNextRun(data as Schedule) || data.scheduled_at || null;
 
     const { rows } = await db.query<Schedule>(
       `INSERT INTO stream_schedules (
@@ -261,7 +263,7 @@ class SchedulerService {
     if (current.length === 0) return null;
 
     const merged = { ...current[0], ...data };
-    const nextRun = this.calculateNextRun(merged as Schedule) || merged.scheduled_at;
+    const nextRun = this.calculateNextRun(merged as Schedule) || merged.scheduled_at || null;
 
     const { rows } = await db.query<Schedule>(
       `UPDATE stream_schedules SET

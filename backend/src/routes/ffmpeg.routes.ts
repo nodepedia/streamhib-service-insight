@@ -1,10 +1,11 @@
-import express from 'express';
+import express, { Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
 import { spawn } from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../config/database.js';
 import { authenticate } from '../middleware/auth.middleware.js';
+import { AuthRequest } from '../types/index.js';
 
 const router = express.Router();
 
@@ -14,11 +15,6 @@ const thumbnailsDir = path.join(uploadsDir, 'thumbnails');
 // Ensure directories exist
 if (!fs.existsSync(thumbnailsDir)) {
   fs.mkdirSync(thumbnailsDir, { recursive: true });
-}
-
-interface FFmpegProgress {
-  percent: number;
-  time: string;
 }
 
 // Helper: Run FFmpeg command
@@ -132,10 +128,10 @@ const getVideoMetadata = async (filePath: string): Promise<{
 };
 
 // POST /api/ffmpeg/thumbnail/:videoId - Generate thumbnail for a video
-router.post('/thumbnail/:videoId', authenticate, async (req, res, next) => {
+router.post('/thumbnail/:videoId', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { videoId } = req.params;
-    const { timestamp = '00:00:05' } = req.body; // Default to 5 seconds
+    const { timestamp = '00:00:05' } = req.body;
 
     // Get video info
     const { rows } = await db.query(
@@ -144,14 +140,16 @@ router.post('/thumbnail/:videoId', authenticate, async (req, res, next) => {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Video not found' });
+      res.status(404).json({ success: false, error: 'Video not found' });
+      return;
     }
 
     const video = rows[0];
     const videoPath = path.join(uploadsDir, req.user!.id, video.filename);
     
     if (!fs.existsSync(videoPath)) {
-      return res.status(404).json({ success: false, error: 'Video file not found' });
+      res.status(404).json({ success: false, error: 'Video file not found' });
+      return;
     }
 
     // Generate thumbnail
@@ -174,7 +172,8 @@ router.post('/thumbnail/:videoId', authenticate, async (req, res, next) => {
     ]);
 
     if (!result.success) {
-      return res.status(500).json({ success: false, error: 'Failed to generate thumbnail', details: result.output });
+      res.status(500).json({ success: false, error: 'Failed to generate thumbnail', details: result.output });
+      return;
     }
 
     // Update video with thumbnail URL
@@ -194,10 +193,10 @@ router.post('/thumbnail/:videoId', authenticate, async (req, res, next) => {
 });
 
 // POST /api/ffmpeg/transcode/:videoId - Transcode video to different quality
-router.post('/transcode/:videoId', authenticate, async (req, res, next) => {
+router.post('/transcode/:videoId', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { videoId } = req.params;
-    const { quality = '720p' } = req.body; // 720p, 1080p, 480p
+    const { quality = '720p' } = req.body;
 
     // Get video info
     const { rows } = await db.query(
@@ -206,14 +205,16 @@ router.post('/transcode/:videoId', authenticate, async (req, res, next) => {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Video not found' });
+      res.status(404).json({ success: false, error: 'Video not found' });
+      return;
     }
 
     const video = rows[0];
     const videoPath = path.join(uploadsDir, req.user!.id, video.filename);
     
     if (!fs.existsSync(videoPath)) {
-      return res.status(404).json({ success: false, error: 'Video file not found' });
+      res.status(404).json({ success: false, error: 'Video file not found' });
+      return;
     }
 
     // Quality settings
@@ -251,6 +252,8 @@ router.post('/transcode/:videoId', authenticate, async (req, res, next) => {
       outputPath
     ];
 
+    const userId = req.user!.id;
+
     // Run transcoding
     runFFmpeg(ffmpegArgs).then(async (result) => {
       if (result.success) {
@@ -263,7 +266,7 @@ router.post('/transcode/:videoId', authenticate, async (req, res, next) => {
           `INSERT INTO videos (user_id, title, description, filename, original_filename, file_size, duration_seconds, mime_type, status)
            VALUES ($1, $2, $3, $4, $5, $6, $7, 'video/mp4', 'ready')`,
           [
-            req.user!.id,
+            userId,
             `${video.title} (${quality})`,
             video.description,
             outputFilename,
@@ -298,7 +301,7 @@ router.post('/transcode/:videoId', authenticate, async (req, res, next) => {
 });
 
 // GET /api/ffmpeg/metadata/:videoId - Get video metadata
-router.get('/metadata/:videoId', authenticate, async (req, res, next) => {
+router.get('/metadata/:videoId', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { videoId } = req.params;
 
@@ -309,14 +312,16 @@ router.get('/metadata/:videoId', authenticate, async (req, res, next) => {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Video not found' });
+      res.status(404).json({ success: false, error: 'Video not found' });
+      return;
     }
 
     const video = rows[0];
     const videoPath = path.join(uploadsDir, req.user!.id, video.filename);
     
     if (!fs.existsSync(videoPath)) {
-      return res.status(404).json({ success: false, error: 'Video file not found' });
+      res.status(404).json({ success: false, error: 'Video file not found' });
+      return;
     }
 
     const metadata = await getVideoMetadata(videoPath);
@@ -343,10 +348,10 @@ router.get('/metadata/:videoId', authenticate, async (req, res, next) => {
 });
 
 // POST /api/ffmpeg/extract-audio/:videoId - Extract audio from video
-router.post('/extract-audio/:videoId', authenticate, async (req, res, next) => {
+router.post('/extract-audio/:videoId', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { videoId } = req.params;
-    const { format = 'mp3' } = req.body; // mp3, aac, wav
+    const { format = 'mp3' } = req.body;
 
     // Get video info
     const { rows } = await db.query(
@@ -355,14 +360,16 @@ router.post('/extract-audio/:videoId', authenticate, async (req, res, next) => {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Video not found' });
+      res.status(404).json({ success: false, error: 'Video not found' });
+      return;
     }
 
     const video = rows[0];
     const videoPath = path.join(uploadsDir, req.user!.id, video.filename);
     
     if (!fs.existsSync(videoPath)) {
-      return res.status(404).json({ success: false, error: 'Video file not found' });
+      res.status(404).json({ success: false, error: 'Video file not found' });
+      return;
     }
 
     // Generate output filename
@@ -388,7 +395,8 @@ router.post('/extract-audio/:videoId', authenticate, async (req, res, next) => {
     ]);
 
     if (!result.success) {
-      return res.status(500).json({ success: false, error: 'Failed to extract audio', details: result.output });
+      res.status(500).json({ success: false, error: 'Failed to extract audio', details: result.output });
+      return;
     }
 
     const stats = fs.statSync(outputPath);
