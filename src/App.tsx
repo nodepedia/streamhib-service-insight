@@ -23,6 +23,7 @@ import StartLive from "./pages/user/StartLive";
 import Videos from "./pages/user/Videos";
 import Playlists from "./pages/user/Playlists";
 import LiveStreams from "./pages/user/LiveStreams";
+import Schedules from "./pages/user/Schedules";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/user" element={<UserLayout />}>
               <Route path="dashboard" element={<UserDashboard />} />
               <Route path="live-streams" element={<LiveStreams />} />
+              <Route path="schedules" element={<Schedules />} />
               <Route path="videos" element={<Videos />} />
               <Route path="playlists" element={<Playlists />} />
               <Route path="youtube-api" element={<YouTubeAPI />} />
