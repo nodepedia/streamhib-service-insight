@@ -264,6 +264,13 @@ export interface Stream {
   started_at?: string;
   created_at: string;
   updated_at?: string;
+  engineStatus?: {
+    fps?: number;
+    bitrate?: string;
+    uptime?: number;
+    currentVideo?: string;
+    currentVideoIndex?: number;
+  };
 }
 
 export interface CreateStreamData {

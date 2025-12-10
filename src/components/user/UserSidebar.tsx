@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/user/dashboard' },
+  { icon: Radio, label: 'Live Streams', href: '/user/live-streams' },
   { icon: Video, label: 'Video Manager', href: '/user/videos' },
   { icon: ListVideo, label: 'Playlists', href: '/user/playlists' },
   { icon: Key, label: 'YouTube API', href: '/user/youtube-api' },

@@ -1,10 +1,12 @@
 import { Router, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
 import { db } from '../config/database.js';
 import { authenticate, requirePlan } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
 import { createStreamSchema, updateStreamSchema, streamIdSchema } from '../schemas/stream.schema.js';
 import { AuthRequest, Stream } from '../types/index.js';
+import { streamingEngine } from '../services/streaming.engine.js';
 
 const router = Router();
 
@@ -181,10 +183,11 @@ router.patch('/:id', validate(updateStreamSchema), async (req: AuthRequest, res:
   }
 });
 
-// POST /api/streams/:id/start - Start streaming
+// POST /api/streams/:id/start - Start streaming with FFmpeg
 router.post('/:id/start', validate(streamIdSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const { playbackMode = 'loop', playlist } = req.body;
 
     const checkResult = await db.query<Stream>(
       'SELECT * FROM streams WHERE id = $1 AND user_id = $2',
@@ -197,32 +200,102 @@ router.post('/:id/start', validate(streamIdSchema), async (req: AuthRequest, res
     }
 
     const stream = checkResult.rows[0];
-    if (stream.status === 'live') {
-      res.status(400).json({ error: 'Stream is already live' });
+    
+    if (stream.status === 'live' || stream.status === 'starting') {
+      res.status(400).json({ error: 'Stream is already running' });
       return;
     }
 
-    // Update stream status
+    // Check if streaming engine already has this stream
+    if (streamingEngine.isStreamActive(id)) {
+      res.status(400).json({ error: 'Stream is already active in streaming engine' });
+      return;
+    }
+
+    // Update stream status to starting
     await db.query(
       `UPDATE streams SET status = 'starting', started_at = NOW(), updated_at = NOW() 
        WHERE id = $1`,
       [id]
     );
 
-    // In production, this would trigger actual streaming process
-    // For now, simulate starting
-    setTimeout(async () => {
+    // Extract filename from source_url (assuming it's stored as filename)
+    const videoFilename = path.basename(stream.source_url);
+
+    // Start streaming engine
+    try {
+      const status = await streamingEngine.startStream({
+        streamId: id,
+        userId: req.user!.id,
+        videoPath: videoFilename,
+        platform: stream.platform,
+        streamKey: stream.stream_key,
+        rtmpUrl: stream.rtmp_url || undefined,
+        playbackMode: playbackMode as 'loop' | 'sequential' | 'random',
+        quality: stream.quality,
+        playlist: playlist || undefined,
+      });
+
+      // Set up event listeners for this stream
+      streamingEngine.once('streamLive', async (streamId: string) => {
+        if (streamId === id) {
+          await db.query(
+            `UPDATE streams SET status = 'live', updated_at = NOW() WHERE id = $1`,
+            [id]
+          );
+        }
+      });
+
+      streamingEngine.once('streamEnded', async (streamId: string) => {
+        if (streamId === id) {
+          // Record session
+          const streamData = await db.query<Stream>(
+            'SELECT * FROM streams WHERE id = $1',
+            [id]
+          );
+          
+          if (streamData.rows.length > 0 && streamData.rows[0].started_at) {
+            const durationSeconds = Math.floor(
+              (Date.now() - new Date(streamData.rows[0].started_at).getTime()) / 1000
+            );
+            
+            await db.query(
+              `INSERT INTO stream_sessions (id, stream_id, started_at, ended_at, duration_seconds, peak_viewers, average_viewers)
+               VALUES ($1, $2, $3, NOW(), $4, $5, $6)`,
+              [uuidv4(), id, streamData.rows[0].started_at, durationSeconds, streamData.rows[0].viewer_count, streamData.rows[0].viewer_count]
+            );
+          }
+
+          await db.query(
+            `UPDATE streams SET status = 'idle', started_at = NULL, viewer_count = 0, updated_at = NOW() 
+             WHERE id = $1`,
+            [id]
+          );
+        }
+      });
+
+      streamingEngine.once('streamError', async (streamId: string, errorStatus: any) => {
+        if (streamId === id) {
+          await db.query(
+            `UPDATE streams SET status = 'error', updated_at = NOW() WHERE id = $1`,
+            [id]
+          );
+        }
+      });
+
+      res.json({
+        success: true,
+        message: 'Stream starting...',
+        data: status
+      });
+    } catch (engineError: any) {
+      // Reset status if engine fails
       await db.query(
-        `UPDATE streams SET status = 'live', updated_at = NOW() WHERE id = $1`,
+        `UPDATE streams SET status = 'idle', updated_at = NOW() WHERE id = $1`,
         [id]
       );
-    }, 2000);
-
-    res.json({
-      success: true,
-      message: 'Stream starting...',
-      data: { status: 'starting' }
-    });
+      res.status(500).json({ error: engineError.message || 'Failed to start streaming engine' });
+    }
   } catch (error) {
     console.error('Start stream error:', error);
     res.status(500).json({ error: 'Failed to start stream' });
@@ -250,6 +323,15 @@ router.post('/:id/stop', validate(streamIdSchema), async (req: AuthRequest, res:
       return;
     }
 
+    // Stop streaming engine
+    if (streamingEngine.isStreamActive(id)) {
+      try {
+        await streamingEngine.stopStream(id);
+      } catch (engineError) {
+        console.error('Error stopping streaming engine:', engineError);
+      }
+    }
+
     // Record session if was live
     if (stream.status === 'live' && stream.started_at) {
       const durationSeconds = Math.floor((Date.now() - new Date(stream.started_at).getTime()) / 1000);
@@ -275,6 +357,60 @@ router.post('/:id/stop', validate(streamIdSchema), async (req: AuthRequest, res:
   } catch (error) {
     console.error('Stop stream error:', error);
     res.status(500).json({ error: 'Failed to stop stream' });
+  }
+});
+
+// GET /api/streams/:id/live-status - Get live stream status from engine
+router.get('/:id/live-status', validate(streamIdSchema), async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Check ownership
+    const checkResult = await db.query(
+      'SELECT id FROM streams WHERE id = $1 AND user_id = $2',
+      [id, req.user?.id]
+    );
+
+    if (checkResult.rows.length === 0) {
+      res.status(404).json({ error: 'Stream not found' });
+      return;
+    }
+
+    const status = streamingEngine.getStreamStatus(id);
+
+    res.json({
+      success: true,
+      data: status || { status: 'idle', streamId: id }
+    });
+  } catch (error) {
+    console.error('Get live status error:', error);
+    res.status(500).json({ error: 'Failed to get live status' });
+  }
+});
+
+// GET /api/streams/active - Get all active streams for user
+router.get('/active/all', async (req: AuthRequest, res: Response) => {
+  try {
+    const result = await db.query<Stream>(
+      `SELECT * FROM streams 
+       WHERE user_id = $1 AND status IN ('live', 'starting')
+       ORDER BY started_at DESC`,
+      [req.user?.id]
+    );
+
+    // Enrich with engine status
+    const enrichedStreams = result.rows.map(stream => ({
+      ...stream,
+      engineStatus: streamingEngine.getStreamStatus(stream.id),
+    }));
+
+    res.json({
+      success: true,
+      data: enrichedStreams
+    });
+  } catch (error) {
+    console.error('Get active streams error:', error);
+    res.status(500).json({ error: 'Failed to get active streams' });
   }
 });
 
