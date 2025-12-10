@@ -71,12 +71,12 @@ router.post('/register', validate(registerSchema), async (req, res: Response) =>
 // POST /api/auth/login
 router.post('/login', validate(loginSchema), async (req, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const { identifier, password } = req.body;
 
-    // Find user
+    // Find user by email or username
     const result = await db.query<User>(
-      'SELECT * FROM users WHERE email = $1',
-      [email]
+      'SELECT * FROM users WHERE email = $1 OR username = $1',
+      [identifier]
     );
 
     if (result.rows.length === 0) {
@@ -108,6 +108,7 @@ router.post('/login', validate(loginSchema), async (req, res: Response) => {
           id: user.id,
           name: user.name,
           email: user.email,
+          username: user.username,
           role: user.role,
           plan: user.plan
         },

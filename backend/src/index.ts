@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import streamRoutes from './routes/stream.routes.js';
 import videoRoutes from './routes/video.routes.js';
+import ffmpegRoutes from './routes/ffmpeg.routes.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { db } from './config/database.js';
 
@@ -50,6 +51,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/streams', streamRoutes);
 app.use('/api/videos', videoRoutes);
+app.use('/api/ffmpeg', ffmpegRoutes);
 
 // Serve uploaded files
 app.use('/uploads', express.static(process.env.UPLOADS_DIR || './uploads'));

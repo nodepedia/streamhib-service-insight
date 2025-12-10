@@ -8,6 +8,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(50) UNIQUE,
     name VARCHAR(100) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
@@ -53,6 +54,7 @@ CREATE INDEX IF NOT EXISTS idx_streams_status ON streams(status);
 CREATE INDEX IF NOT EXISTS idx_stream_sessions_stream_id ON stream_sessions(stream_id);
 CREATE INDEX IF NOT EXISTS idx_stream_sessions_started_at ON stream_sessions(started_at);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 
 -- Function to auto-update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -76,14 +78,15 @@ CREATE TRIGGER update_streams_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- Sample admin user (password: Admin123!)
--- In production, create this through proper registration
-INSERT INTO users (id, email, name, password_hash, role, plan) 
+-- Admin user with username 'admin' and password '123qwe!@#QWE'
+-- bcrypt hash generated with 12 rounds
+INSERT INTO users (id, email, username, name, password_hash, role, plan) 
 VALUES (
     uuid_generate_v4(),
     'admin@infinitystream.id',
-    'Admin',
-    '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.zW5M1h.9Z5Xz2K', -- Admin123!
+    'admin',
+    'Administrator',
+    '$2a$12$rQH8TfGdJQMvQrj3.EKzAu4.O7GxXkQqKN5h8YbdL5mMH9YLPUq3e',
     'admin',
     'enterprise'
 ) ON CONFLICT (email) DO NOTHING;

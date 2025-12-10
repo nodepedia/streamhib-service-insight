@@ -5,6 +5,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  username?: string;
   role: string;
   plan: string;
 }
@@ -14,7 +15,7 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (identifier: string, password: string) => Promise<{ success: boolean; user?: User; error?: string }>;
   register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
@@ -45,9 +46,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (identifier: string, password: string) => {
     try {
-      const response = await api.login(email, password);
+      const response = await api.login(identifier, password);
       
       if (response.success && response.data) {
         const { user, token } = response.data;
@@ -55,7 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setToken(token);
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
-        return { success: true };
+        return { success: true, user };
       }
       return { success: false, error: 'Login failed' };
     } catch (error: any) {

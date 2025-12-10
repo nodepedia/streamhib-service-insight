@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
 const loginSchema = z.object({
-  email: z.string().email('Email tidak valid').trim().toLowerCase(),
+  identifier: z.string().min(1, 'Email atau username wajib diisi').trim(),
   password: z.string().min(1, 'Password wajib diisi')
 });
 
@@ -52,7 +52,7 @@ const Auth = () => {
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' }
+    defaultValues: { identifier: '', password: '' }
   });
 
   const registerForm = useForm<RegisterFormData>({
@@ -62,12 +62,17 @@ const Auth = () => {
 
   const onLogin = async (data: LoginFormData) => {
     setIsLoading(true);
-    const result = await login(data.email, data.password);
+    const result = await login(data.identifier, data.password);
     setIsLoading(false);
 
-    if (result.success) {
+    if (result.success && result.user) {
       toast({ title: 'Login berhasil', description: 'Selamat datang kembali!' });
-      navigate('/user/dashboard');
+      // Redirect based on role
+      if (result.user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/user/dashboard');
+      }
     } else {
       toast({ title: 'Login gagal', description: result.error, variant: 'destructive' });
     }
@@ -111,12 +116,12 @@ const Auth = () => {
                   <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
                     <FormField
                       control={loginForm.control}
-                      name="email"
+                      name="identifier"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel>Email atau Username</FormLabel>
                           <FormControl>
-                            <Input placeholder="email@contoh.com" type="email" {...field} />
+                            <Input placeholder="email@contoh.com atau username" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
