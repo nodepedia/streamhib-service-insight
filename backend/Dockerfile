@@ -20,6 +20,9 @@ FROM node:20-alpine AS production
 
 WORKDIR /app
 
+# Install FFmpeg for video processing
+RUN apk add --no-cache ffmpeg
+
 # Copy package files
 COPY package*.json ./
 
@@ -29,13 +32,21 @@ RUN npm ci --only=production
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
+# Create uploads directory
+RUN mkdir -p /app/uploads/thumbnails
+
+# Create non-root user and set permissions
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 && \
+    chown -R nodejs:nodejs /app
+
 USER nodejs
 
 # Expose port
 EXPOSE 3001
+
+# Set environment variables
+ENV UPLOADS_DIR=/app/uploads
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
