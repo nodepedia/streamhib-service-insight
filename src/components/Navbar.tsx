@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 
@@ -57,9 +58,11 @@ const Navbar = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" size="sm">Masuk</Button>
-            <Button variant="gradient" size="sm">
-              Coba Gratis
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/auth">Masuk</Link>
+            </Button>
+            <Button variant="gradient" size="sm" asChild>
+              <Link to="/auth">Coba Gratis</Link>
             </Button>
           </div>
 
@@ -89,8 +92,12 @@ const Navbar = () => {
               ))}
             </div>
             <div className="flex flex-col gap-2 pt-4 border-t border-border">
-              <Button variant="ghost" className="w-full justify-center">Masuk</Button>
-              <Button variant="gradient" className="w-full justify-center">Coba Gratis</Button>
+              <Button variant="ghost" className="w-full justify-center" asChild>
+                <Link to="/auth" onClick={() => setIsOpen(false)}>Masuk</Link>
+              </Button>
+              <Button variant="gradient" className="w-full justify-center" asChild>
+                <Link to="/auth" onClick={() => setIsOpen(false)}>Coba Gratis</Link>
+              </Button>
             </div>
           </div>
         )}
