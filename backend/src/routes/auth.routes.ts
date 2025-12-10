@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt, { SignOptions } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../config/database.js';
 import { validate } from '../middleware/validate.middleware.js';
@@ -9,6 +9,8 @@ import { registerSchema, loginSchema } from '../schemas/auth.schema.js';
 import { AuthRequest, User } from '../types/index.js';
 
 const router = Router();
+
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 // POST /api/auth/register
 router.post('/register', validate(registerSchema), async (req, res: Response) => {
@@ -42,14 +44,10 @@ router.post('/register', validate(registerSchema), async (req, res: Response) =>
     const user = result.rows[0];
 
     // Generate JWT
-    const signOptions: SignOptions = {
-      expiresIn: process.env.JWT_EXPIRES_IN || '7d'
-    };
-    
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, plan: user.plan },
-      process.env.JWT_SECRET!,
-      signOptions
+      process.env.JWT_SECRET as string,
+      { expiresIn: JWT_EXPIRES_IN }
     );
 
     res.status(201).json({
@@ -98,14 +96,10 @@ router.post('/login', validate(loginSchema), async (req, res: Response) => {
     }
 
     // Generate JWT
-    const signOptions: SignOptions = {
-      expiresIn: process.env.JWT_EXPIRES_IN || '7d'
-    };
-    
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, plan: user.plan },
-      process.env.JWT_SECRET!,
-      signOptions
+      process.env.JWT_SECRET as string,
+      { expiresIn: JWT_EXPIRES_IN }
     );
 
     res.json({
@@ -155,14 +149,10 @@ router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
 // POST /api/auth/refresh
 router.post('/refresh', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const signOptions: SignOptions = {
-      expiresIn: process.env.JWT_EXPIRES_IN || '7d'
-    };
-    
     const token = jwt.sign(
       { id: req.user?.id, email: req.user?.email, role: req.user?.role, plan: req.user?.plan },
-      process.env.JWT_SECRET!,
-      signOptions
+      process.env.JWT_SECRET as string,
+      { expiresIn: JWT_EXPIRES_IN }
     );
 
     res.json({
