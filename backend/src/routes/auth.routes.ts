@@ -10,7 +10,24 @@ import { AuthRequest, User } from '../types/index.js';
 
 const router = Router();
 
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+// Parse JWT_EXPIRES_IN to seconds (default 7 days)
+const parseExpiresIn = (): number => {
+  const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+  const match = expiresIn.match(/^(\d+)([smhd])$/);
+  if (match) {
+    const value = parseInt(match[1]);
+    const unit = match[2];
+    switch (unit) {
+      case 's': return value;
+      case 'm': return value * 60;
+      case 'h': return value * 3600;
+      case 'd': return value * 86400;
+    }
+  }
+  return 604800; // Default 7 days in seconds
+};
+
+const JWT_EXPIRES_IN_SECONDS = parseExpiresIn();
 
 // POST /api/auth/register
 router.post('/register', validate(registerSchema), async (req, res: Response) => {
@@ -47,7 +64,7 @@ router.post('/register', validate(registerSchema), async (req, res: Response) =>
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, plan: user.plan },
       process.env.JWT_SECRET as string,
-      { expiresIn: JWT_EXPIRES_IN }
+      { expiresIn: JWT_EXPIRES_IN_SECONDS }
     );
 
     res.status(201).json({
@@ -99,7 +116,7 @@ router.post('/login', validate(loginSchema), async (req, res: Response) => {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, plan: user.plan },
       process.env.JWT_SECRET as string,
-      { expiresIn: JWT_EXPIRES_IN }
+      { expiresIn: JWT_EXPIRES_IN_SECONDS }
     );
 
     res.json({
@@ -152,7 +169,7 @@ router.post('/refresh', authenticate, async (req: AuthRequest, res: Response) =>
     const token = jwt.sign(
       { id: req.user?.id, email: req.user?.email, role: req.user?.role, plan: req.user?.plan },
       process.env.JWT_SECRET as string,
-      { expiresIn: JWT_EXPIRES_IN }
+      { expiresIn: JWT_EXPIRES_IN_SECONDS }
     );
 
     res.json({
